@@ -1,57 +1,45 @@
-import Host from './ServScript.js';
+import express from 'express';
+import path from 'path';
+import fs from 'fs/promises';
+import { fileURLToPath } from 'url';
 
-const PORT = 3000;
+const __dirname = path.dirname(fileURLToPath(import.meta.url)); 
 
-// function fileDir(name, type = 'html') {
-//     return path.resolve(__dirname, 'pages', `${name}.${type}`);
-// }
+const app = express();
 
-// async function check404(fileDirection) {
-//     return (await fs.readdir(path.dirname(fileDirection), {withFileTypes: true})).some((file) => file.name == path.basename(fileDirection));
-// }
+function pathToFile(pathToFile) {
+    return path.join(__dirname, pathToFile);
+}
 
-// const server = http.createServer(async (req, res) => {
-//     console.log(req.url);
-//     let dir = fileDir(req.url.slice(1), path.extname(req.url.slice(1)));
-//     if (req.url == '/') {
-//         dir = fileDir('index');
-//     }
-//     if (!(await check404(dir))) {
-//         res.writeHead(404, {'Content-Type': 'text/html'});
-//         await res.write(await fs.readFile(fileDir('404'), 'utf-8'));
-//     } else {
-//         if (path.extname(dir) == '.css') {
-//             console.log('css');
-//             res.writeHead(200, {'Content-Type': 'text/css'});
-//             dir = fileDir(req.url.slice(1), 'css');
-//             console.log(dir);
-//         } else if (path.extname(dir) == '.js') {
-//             res.writeHead(200, {'Content-Type': 'text/javascript'});
-//             dir = fileDir(req.url.slice(1), 'js');
-//         } else if (path.extname(dir) == '.html') {
-//             res.writeHead(200, {'Content-Type': 'text/html'});
-//             if (path.basename(dir) == 'redir') {
-//                 res.writeHead(302, {'Location': ''});
-//             }
-//         }
-//         await res.write(await fs.readFile(dir, 'utf-8'));
-//     }
-//     res.end();
-// });
+app.use(async (req, res) => {await fs.appendFile(pathToFile('pages/requests.log'), `${new Date().toLocaleDateString('ru-RU')} ${req.method} ${req.url}\n`, 'utf-8'); req.next();});
 
-// server.listen(3000, 'localhost', () => {})
+app.use(express.static(path.join(__dirname, 'pages')));
 
-const host = new Host({
-    'index': 'index.html',
-    'page1': 'index.html',
-    'page': 'index.html',
-    'page2': 'page2.html',
-    'page3': 'page3.html',
-    'page4': 'page4.html'
-}, 'pages', '404.html', 'index.html', (req, res, addToPath, path, redir) => {
-    if (req.url == '/page5') {
-        redir('index');
-    }
-}, () => {}, 'localhost', PORT);
+app.use(async (req, res) => {await fs.appendFile(pathToFile('pages/requests.log'), `${new Date().toLocaleDateString('ru-RU')} ${req.method} ${req.url}\n`, 'utf-8'); req.next();});
 
-host.start();
+app.get('/', async (req, res) => {
+    await fs.writeFile(pathToFile('pages/visits.txt'), (+(await fs.readFile(pathToFile('pages/visits.txt'), 'utf-8')) + 1).toString(), 'utf-8');
+    await res.sendFile(pathToFile('pages/main.html'));
+});
+
+app.get('/about', async (req, res) => {
+    await res.sendFile(pathToFile('pages/about.html'));
+});
+
+app.get('/contact', async (req, res) => {
+    await res.sendFile(pathToFile('pages/contact.html'));
+});
+
+app.get('/data', async (req, res) => {
+    await res.sendFile(pathToFile('pages/data.json'));
+});
+
+app.get('/stats', async (req, res) => {
+    await res.sendFile(pathToFile('pages/visits.txt'));
+});
+
+app.use(async (req, res) => {
+    await res.status(404).sendFile(pathToFile('pages/404.html'));
+});
+
+app.listen(3000, () => {});
