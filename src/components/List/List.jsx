@@ -1,28 +1,12 @@
-import React from "react";
+import Item from "../Item/Item.jsx";
 import { v4 } from "uuid";
-import "./List.css";
 
-function List({users, romb}) {
+function List({ items, setItems, isColored, setIsColored }) {
     return (
-        romb
-            ?
-        <div className="romb"></div>
-            :
         <ul>
-            {
-                users.map((user) => (
-                        <li key={v4()}>
-                            {user.isBlack
-                                ?
-                            <div className="black">{user.name}</div>
-                                :
-                            <img src={user.avatar} />
-                            }
-                            {user.name}
-                        </li>
-                    )
-                ) 
-            }
+            {items.map((item) => (
+                <Item key={v4()} item={item} setItems={setItems} setIsColored={setIsColored} isColored={isColored} />
+            ))}
         </ul>
     );
 }
